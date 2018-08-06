@@ -1,6 +1,8 @@
 # Automate
 An OpenAPI spec driven automation tool to orchestrate workflows across different services.
 
+[![Build Status](https://travis-ci.org/chardi/automate.svg?branch=master)](https://travis-ci.org/chardi/automate)
+
 ## Usage
 
 Let's take a tour by creating an example flow for testing [Swagger Petstore](http://petstore.swagger.io/) service.\
@@ -235,6 +237,17 @@ Check out this [example](examples/petstore-event-proxy.js) about this topic.
 ### Create your own runner
 
 *TBD*
+
+## Action Error Handling
+
+```js
+const {
+  ON_ERROR_IGNORE_ACTION, // Ignore failed action
+  ON_ERROR_RETRY_ACTION,  // Retry failed action
+  ON_ERROR_RESTART_FLOW,  // Restart entire flow on failure
+  ON_ERROR_STOP_FLOW      // Stop flow on failure (default)
+} = Automate.Action.Constants
+```
 
 ## OpenAPI Spec with Automate Extension
 
