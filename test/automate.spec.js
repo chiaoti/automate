@@ -55,7 +55,7 @@ describe('Automate', function () {
     it('should has properties that matches the specification for CoreFunction service', function (done) {
       expect(CoreFuncService).to.deep.include({
         name: 'CoreFunction',
-        events: ['Autorun', 'Timeout', 'Interval', 'Error']
+        events: ['Autorun', 'Error']
       })
       done()
     })
