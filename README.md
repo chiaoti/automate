@@ -4,7 +4,7 @@ An OpenAPI spec driven automation tool to orchestrate workflows across different
 ## Usage
 
 Let's take a tour by creating an example flow for testing [Swagger Petstore](http://petstore.swagger.io/) service.\
-The Petstore API spec with `Automate Extension` can be found [here](test/specs/Petstore.yaml).
+The Petstore API spec with `Automate Extension` can be found [here](examples/specs/Petstore.yaml).
 
 ### Install
 
@@ -14,7 +14,7 @@ npm install @csy1983/automate
 
 ### Get started
 
-Assuming we have the spec file [`Petstore.yaml`](test/specs/Petstore.yaml) installed in `/my/own/specs/`.
+Assuming we have the spec file [`Petstore.yaml`](examples/specs/Petstore.yaml) installed in `/my/own/specs/`.
 
 ```js
 const Automate = require('@csy1983/automate')

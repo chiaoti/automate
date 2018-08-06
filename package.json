@@ -10,6 +10,7 @@
     "oas3",
     "swagger"
   ],
+  "repository": "github:chardi/automate",
   "bugs": {
     "url": "https://github.com/chardi/automate/issues"
   },
