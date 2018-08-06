@@ -17,7 +17,7 @@ npm install @csy1983/automate
 Assuming we have the spec file [`Petstore.yaml`](test/specs/Petstore.yaml) installed in `/my/own/specs/`.
 
 ```js
-const Automate = require('@chardi/automate')
+const Automate = require('@csy1983/automate')
 
 // Create an automate instance.
 const automate = new Automate({ specPath: '/my/own/specs/' })
