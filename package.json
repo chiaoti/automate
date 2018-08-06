@@ -1,5 +1,5 @@
 {
-  "name": "@chardi/automate",
+  "name": "@csy1983/automate",
   "version": "0.1.0",
   "description": "An OpenAPI spec driven automation tool to orchestrate workflows across different services.",
   "keywords": [

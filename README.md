@@ -9,7 +9,7 @@ The Petstore API spec with `Automate Extension` can be found [here](test/specs/P
 ### Install
 
 ```
-npm install @chardi/automate
+npm install @csy1983/automate
 ```
 
 ### Get started
