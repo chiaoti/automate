@@ -1,0 +1,760 @@
+openapi: 3.0.0
+info:
+  version: "0.0.1"
+  title: Automate Service API
+  description: An automation service to orchestrate workflows.
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+
+servers:
+  - url: 'http://localhost:12255/v1'
+
+tags:
+  - name: Flow
+  - name: Action
+
+x-automate-services:
+  - name: CoreFunction
+    description: Provides automate core function methods.
+    runner: core
+    methodTag: x-automate-core-functions
+    events:
+      - name: Autorun
+        description: >-
+          This event is used to trigger flows that wish to run automatically on `Automate` service starts.
+      - name: Error
+        description: Errors reported by `error_report` runner.
+
+  - name: Automate
+    description: Provides web api for operating Automate service.
+    category: Productivity
+    runner: fetch
+
+x-automate-core-functions:
+  log:
+    summary: Log message
+    parameters:
+      - name: message
+        type: string
+        required: true
+  delay:
+    summary: Delay an action.
+    parameters:
+      - name: ms
+        description: Milliseconds
+        type: number
+        required: true
+  link:
+    summary: Transfer execution from a flow to another.
+    parameters:
+      - name: flow
+        type: string
+        required: true
+        description: A flow id
+  split:
+    summary: Split the execution of a flow into two or more subflows. All subflows will be run in parallel.
+    parameters:
+      - name: flows
+        type: array
+        required: true
+        items:
+          - type: string
+            description: A flow id
+  switch:
+    summary: Transfer execution to one of the several flows, depending on the cases.
+    parameters:
+      - name: target
+        type: string
+        enum:
+          - 'Argument'
+          - 'Variable'
+        default: 'Argument'
+      - name: property
+        type: string
+        required: true
+        example: 'temperatureCelsius'
+      - name: cases
+        required: true
+        schema:
+          type: array
+          items:
+            - type: object
+              properties:
+                rule:
+                  type: string
+                  required: true
+                  enum:
+                    - '='
+                    - '>'
+                    - '<'
+                    - '>='
+                    - '<='
+                    - '!='
+                    - 'is between'
+                    - 'is true'
+                    - 'is false'
+                    - 'is null'
+                    - 'is not null'
+                    - 'contains'
+                    - 'otherwise'
+                value:
+                  oneOf:
+                    - type: string
+                    - type: number
+                    - type: integer
+                    - type: boolean
+                    - type: array
+                flow:
+                  type: string
+                  description: A flow id
+              example:
+                - rule: '>='
+                  value: 38.5
+                  flow: '864603f85b82409e91aed8eecd76c25e'
+  setVariable:
+    summary: Set one or more variables in argument at runtime to be passed through the subsequent actions in the flow.
+    parameters:
+      - name: variables
+        type: array
+        required: true
+        items:
+          - type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+              value:
+                type: string
+        example:
+          - name: count
+            type: number
+            value: 3
+          - name: username
+            type: string
+            value: 'Chardi'
+  emit:
+    summary: Emit an event to the event system, usually used to trigger another flow.
+    parameters:
+      - name: event
+        description: Event name.
+        type: string
+        required: true
+      - name: payload
+        description: Event payload with any type.
+
+paths:
+  /flow:
+    x-swagger-router-controller: automate
+    get:
+      tags:
+        - Flow
+      summary: Get all flows.
+      operationId: getFlows
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flows'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    post:
+      tags:
+        - Flow
+      summary: Create a new flow.
+      operationId: createFlow
+      requestBody:
+        description: Flow information.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Flow'
+      responses:
+        '200':
+          description: A flow identifier is returned.
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  '/flow/{id}':
+    x-swagger-router-controller: automate
+    get:
+      tags:
+        - Flow
+      summary: Get flow with given identifier.
+      operationId: getFlow
+      parameters:
+        - in: path
+          name: id
+          description: Flow identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flow'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    put:
+      tags:
+        - Flow
+      summary: Modify a flow.
+      operationId: modifyFlow
+      requestBody:
+        description: Flow with modified data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Flow'
+      parameters:
+        - in: path
+          name: id
+          description: Flow identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    delete:
+      tags:
+        - Flow
+      summary: Destroy a flow.
+      operationId: destroyFlow
+      parameters:
+        - in: path
+          name: id
+          description: Flow identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    post:
+      tags:
+        - Flow
+      summary: Run a flow.
+      operationId: runFlow
+      requestBody:
+        description: Flow arguments.
+        content:
+          application/json:
+            schema:
+              type: object
+      parameters:
+        - in: path
+          name: id
+          description: Flow identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /action:
+    x-swagger-router-controller: automate
+    get:
+      tags:
+        - Action
+      summary: Return all available actions.
+      operationId: getActions
+      responses:
+        '200':
+          description: All flows.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Action'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    post:
+      tags:
+        - Action
+      summary: Add an action to the end of sequence for given flow.
+      operationId: createAction
+      requestBody:
+        description: An action.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Action'
+      responses:
+        '200':
+          description: An action identifier is returned.
+          content:
+            application/json:
+              schema:
+                type: string
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  '/action/{id}':
+    x-swagger-router-controller: automate
+    get:
+      tags:
+        - Action
+      summary: Return an action with given action identifier.
+      operationId: getAction
+      parameters:
+        - in: path
+          name: id
+          description: Action identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Action'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    put:
+      tags:
+        - Action
+      summary: Modify an action.
+      operationId: modifyAction
+      requestBody:
+        description: An action with modified data.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Action'
+      parameters:
+        - in: path
+          name: id
+          description: Action identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    delete:
+      tags:
+        - Action
+      summary: Destroy an action.
+      operationId: destroyAction
+      parameters:
+        - in: path
+          name: id
+          description: Action identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+
+components:
+  responses:
+    400BadRequest:
+      description: The request was invalid or cannot be otherwise served.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    401Unauthorized:
+      description: Authentication credentials were missing or incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    403Forbidden:
+      description: The request has been refused or access is not allowed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    404NotFound:
+      description: The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    500InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    501NotImplemented:
+      description: The request method is not supported.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    503ServiceUnavailable:
+      description: 'Service unavailable, try again later.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Flow:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Flow's identifer which is generated by `Automate`.
+        name:
+          type: string
+          description: Flow's name.
+        description:
+          type: string
+          description: Describe what the flow is for.
+        tags:
+          type: array
+          description: Tags associated with the flow.
+          items:
+            type: string
+        owner:
+          type: string
+          description: Indicates who creates this flow.
+        createDate:
+          type: string
+          description: Flow creation date.
+        lastModifiedDate:
+          type: string
+          description: Flow last modified date.
+        lastRunDate:
+          type: string
+          description: Flow last run date.
+        active:
+          type: boolean
+          default: true
+          description: >-
+            Determine whether the flow will be triggered when an event it listens
+            to is received.
+        logo:
+          type: string
+          description: Logo file path for frontend UI usage.
+        triggers:
+          type: array
+          description: Determine what events can trigger this flow.
+          items:
+            type: string
+        sequence:
+          type: array
+          description: >-
+            Describe actions that will take place in sequence when the flow is
+            triggered.
+          items:
+            $ref: '#/components/schemas/Action'
+      required:
+        - id
+        - name
+        - createDate
+  
+    Flows:
+      type: array
+      items:
+        $ref: '#/components/schemas/Flow'
+  
+    Action:
+      type: object
+      description: Actions are what `Automate` actually runs when a flow is triggered.
+      properties:
+        id:
+          type: number
+          description: Action identifier.
+        method:
+          $ref: '#/components/schemas/Method'
+        args:
+          $ref: '#/components/schemas/Arguments'
+        wait:
+          type: boolean
+          description: >-
+            Whether `Automate Flow Runner` should wait for this action to finish
+            its job.
+          default: true
+        onerror:
+          type: string
+          description: |
+            Determine what to do if error occured when running action:
+            * `ignore` - Ignore error and continue the flow.
+            * `retry` - Retry the action.
+            * `restart` - Restart the flow.
+            * `stop` - Stop the flow.
+          enum:
+            - ignore
+            - retry
+            - restart
+            - stop
+          default: ignore
+        retry:
+          type: number
+          description: Specify retry times if `onerror` is set to `retry`.
+          default: 3
+  
+    Method:
+      type: object
+      description: >-
+        Methods are automatically generated by `Automate` by parsing the swagger
+        API specifications.
+      properties:
+        id:
+          type: string
+          description: Method identifier.
+        summary:
+          type: string
+          description: Short summary for the method.
+        description:
+          type: string
+          description: Long description for the method.
+        service:
+          type: string
+          description: Service that owns this method.
+        definition:
+          $ref: '#/components/schemas/MethodDef'
+        runner:
+          type: string
+          description: >
+            Determine which runner to run the method. Supported runners:
+  
+            * `timer` - System internal runner. Mostly used for delay purpose.
+  
+            * `notifier`: System internal runner, used to report system events,
+            action errors, internal errors...etc.
+  
+            * `fetch` - Web API request runner implemented by WHATWG fetch.
+  
+            * `js` - JavaScript runner, always runs inside a sandbox with limited
+            functionalities.
+  
+            * `cli` - Command line runner that allows users to run command line
+            tools.
+          enum:
+            - timer
+            - notifier
+            - fetch
+            - javascript
+            - command
+    
+    MethodDef:
+      type: object
+      description: Method definition.
+      properties:
+        operation:
+          type: string
+          example: put
+        source:
+          type: string
+          example: '/user/{id}'
+        parameters:
+          type: object
+          example:
+            id:
+              in: query
+              type: number
+              required: true
+              description: User identifier number.
+            name:
+              in: body
+              type: string
+              description: User name.
+            age:
+              in: body
+              type: number
+              description: User's age.
+        returns:
+          type: array
+          items:
+            type: object
+            properties:
+              code:
+                type: number
+              message:
+                type: string
+          example:
+            - code: 200
+              message: Update successfully.
+            - code: 404
+              message: User not found.
+            - code: 500
+              message: Server error.
+    
+    Arguments:
+      type: object
+      description: Arguments for fetch action.
+      properties:
+        path:
+          type: object
+        query:
+          type: object
+        header:
+          type: object
+        body:
+          type: object
+        formData:
+          type: object
+    
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message

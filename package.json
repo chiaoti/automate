@@ -1,0 +1,37 @@
+{
+  "name": "@chardi/automate",
+  "version": "0.1.0",
+  "description": "An OpenAPI spec driven automation tool to orchestrate workflows across different services.",
+  "keywords": [
+    "automate",
+    "flow",
+    "workflow",
+    "OpenAPI",
+    "oas3",
+    "swagger"
+  ],
+  "bugs": {
+    "url": "https://github.com/chardi/automate/issues"
+  },
+  "author": "csy",
+  "license": "MIT",
+  "main": "index.js",
+  "dependencies": {
+    "debug": "^3.1.0",
+    "deep-eql": "^3.0.1",
+    "form-data": "^2.3.2",
+    "mocha": "^5.2.0",
+    "mqtt": "^2.18.1",
+    "node-fetch": "^2.1.2",
+    "qs": "^6.5.2",
+    "swagger-parser": "^5.0.0",
+    "uuid": "^3.2.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "standard": "^11.0.1"
+  },
+  "scripts": {
+    "test": "./node_modules/.bin/mocha -b"
+  }
+}

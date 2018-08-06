@@ -1,0 +1,279 @@
+openapi: 3.0.0
+servers:
+  - url: 'http://localhost:12256/v1'
+  - url: 'https://localhost:12256/v1'
+info:
+  version: "0.0.1-oas3"
+  title: Messaging Service API
+tags:
+  - name: MQTT
+paths:
+  /mqtt/config:
+    x-swagger-router-controller: mqtt
+    get:
+      tags:
+        - MQTT
+      summary: Get MQTT configuration.
+      operationId: getMQTTConfig
+      responses:
+        '200':
+          description: MQTT configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MQTTConfiguration'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    put:
+      tags:
+        - MQTT
+      summary: Update MQTT configuration.
+      operationId: updateMQTTConfig
+      parameters:
+        - in: query
+          name: role
+          description: MQTT role.
+          schema:
+            type: string
+            enum:
+              - broker
+              - client
+            default: client
+        - in: query
+          name: broker_host
+          description: Specify broker host for MQTT client.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /mqtt/subscribe:
+    x-swagger-router-controller: mqtt
+    post:
+      tags:
+        - MQTT
+      summary: Subscribe a MQTT topic.
+      operationId: mqttSubscribe
+      parameters:
+        - in: query
+          name: topic
+          description: Topic to subscribe.
+          schema:
+            type: string
+        - in: query
+          name: qos
+          description: QoS level.
+          schema:
+            type: number
+            enum:
+              - 0
+              - 1
+              - 2
+            default: 0
+        - in: query
+          name: event
+          description: >-
+            Event to bind to the topic. When a message for the given topic is
+            received, the bound event will be triggered.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /mqtt/unsubscribe:
+    x-swagger-router-controller: mqtt
+    post:
+      tags:
+        - MQTT
+      summary: Unsubscribe a MQTT topic.
+      operationId: mqttUnsubscribe
+      parameters:
+        - in: query
+          name: topic
+          description: Topic to unsubscribe.
+          schema:
+            type: string
+        - in: query
+          name: event
+          description: Only the bound event for given topic will be unsubscribed.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /mqtt/publish:
+    x-swagger-router-controller: mqtt
+    post:
+      tags:
+        - MQTT
+      summary: Publish a MQTT topic.
+      operationId: mqttPublish
+      parameters:
+        - in: query
+          name: event
+          description: >-
+            Event to bind to the topic. When the bound event is triggered, the
+            given message will be sent to the topic.
+          schema:
+            type: string
+        - in: query
+          name: topic
+          description: Topic to publish.
+          schema:
+            type: string
+        - in: query
+          name: qos
+          description: QoS level.
+          schema:
+            type: number
+            enum:
+              - 0
+              - 1
+              - 2
+            default: 0
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+          application/json:
+            schema:
+              type: string
+        description: Message to publish.
+  /swagger:
+    x-swagger-pipe: swagger_raw
+components:
+  schemas:
+    MQTTConfiguration:
+      properties:
+        role:
+          type: string
+          description: MQTT role. (i.e. `broker` or `client`)
+        broker_host:
+          type: string
+          description: Specify broker host for MQTT client.
+      type: object
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+      required:
+        - code
+        - message
+  responses:
+    400BadRequest:
+      description: The request was invalid or cannot be otherwise served.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    401Unauthorized:
+      description: Authentication credentials were missing or incorrect.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    403Forbidden:
+      description: The request has been refused or access is not allowed.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    404NotFound:
+      description: The requested resource does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    500InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    501NotImplemented:
+      description: The request method is not supported.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    503ServiceUnavailable:
+      description: 'Service unavailable, try again later.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
