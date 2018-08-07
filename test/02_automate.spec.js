@@ -4,8 +4,7 @@ const Automate = require('..')
 const {
   Service,
   Method,
-  Action,
-  Flow
+  Action
 } = Automate
 
 describe('Automate', function () {
@@ -653,51 +652,6 @@ describe('Automate', function () {
       expect(subflow3.actions).to.be.empty // eslint-disable-line
       expect(subflow4.actions).to.be.empty // eslint-disable-line
 
-      done()
-    })
-  })
-
-  describe('Retry-On-Failure test of a flow using Petstore API', function () {
-    flow = new Flow({ name: 'Retry Test' })
-
-    it('should run the flow and retry action 3 times on error', function (done) {
-      this.timeout(20000)
-
-      const getPetById = automate
-        .createAction({
-          name: 'GetPetById',
-          wait: true,
-          timeout: 15000,
-          retryCount: 3,
-          onErrorAction: Action.Constants.ON_ERROR_RETRY_ACTION
-        })
-        .applyMethod(methodGetPetById)
-        .withArgs({ petId: 0 })
-
-      // Run the test flow manually
-      flow
-        .addAction(getPetById)
-        .onRetry((error, action, args) => {
-          expect(error.message).to.equal('Pet not found')
-          expect(action.id).to.equal(getPetById.id)
-        })
-        .onActionFailed((error, action) => {
-          expect(error.message).to.equal('Pet not found')
-          expect(action.id).to.equal(getPetById.id)
-        })
-        .run()
-        .then(() => {
-          done('Oops! This action should not success.')
-        })
-        .catch((error) => {
-          if (!getPetById.canRetry()) done()
-          else done(error)
-        })
-    })
-
-    it('should run flow.removeActionAtIndex() without error', function (done) {
-      flow.removeActionAtIndex(0)
-      expect(flow.actions).to.be.empty // eslint-disable-line
       done()
     })
   })
