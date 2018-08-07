@@ -11,7 +11,7 @@ The Petstore API spec with `Automate Extension` can be found [here](examples/spe
 ### Install
 
 ```sh
-npm install @csy1983/automate
+npm install @chiaoti/automate
 ```
 
 ### Get started
@@ -19,7 +19,7 @@ npm install @csy1983/automate
 Assuming we have the spec file [`Petstore.yaml`](examples/specs/Petstore.yaml) installed in `/my/own/specs/`.
 
 ```js
-const Automate = require('@csy1983/automate')
+const Automate = require('@chiaoti/automate')
 
 // Create an automate instance.
 const automate = new Automate({ specPath: '/my/own/specs/' })
