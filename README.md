@@ -10,7 +10,7 @@ The Petstore API spec with `Automate Extension` can be found [here](examples/spe
 
 ### Install
 
-```
+```sh
 npm install @csy1983/automate
 ```
 
@@ -350,6 +350,12 @@ x-automate-core-functions:
 | `createAction (props)` | Wrapper for creating a new action.<br>Same as `const action = new Action(props)`. |
 
 ### Service Class
+
+#### Properties
+
+| Name | Description |
+|------|-------------|
+| `specPath` | Path where stores OpenAPI specs |
 
 #### Members
 

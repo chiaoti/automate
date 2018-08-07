@@ -1,6 +1,6 @@
 {
   "name": "@csy1983/automate",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "An OpenAPI spec driven automation tool to orchestrate workflows across different services.",
   "keywords": [
     "automate",
