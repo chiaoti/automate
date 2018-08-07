@@ -322,6 +322,13 @@ x-automate-core-functions:
 
 ### Automate Class
 
+#### Properties
+
+| Name | Description |
+|------|-------------|
+| `specPath` | Path where stores OpenAPI specs |
+| `standalone` | Run as standalone service |
+
 #### Members
 
 | Name | Description |
@@ -350,12 +357,6 @@ x-automate-core-functions:
 | `createAction (props)` | Wrapper for creating a new action.<br>Same as `const action = new Action(props)`. |
 
 ### Service Class
-
-#### Properties
-
-| Name | Description |
-|------|-------------|
-| `specPath` | Path where stores OpenAPI specs |
 
 #### Members
 
