@@ -1,4 +1,5 @@
-/* global describe, it */
+/* global describe, it, after */
+const fs = require('fs')
 const expect = require('chai').expect
 const Automate = require('..')
 const {
@@ -7,7 +8,12 @@ const {
 } = Automate
 
 describe('Flow', () => {
-  const automate = new Automate({ specPath: 'examples/specs/' })
+  const automate = new Automate({
+    paths: {
+      specs: 'examples/specs/',
+      db: 'test/01_flow.db'
+    }
+  })
 
   let PetstoreService
   let flow
@@ -44,15 +50,15 @@ describe('Flow', () => {
       // Run the test flow manually
       flow
         .addAction(getPetById)
-        .onRetry((error, action, args) => {
+        .onRetry((error, flow, action, args) => {
           expect(error.message).to.equal('Pet not found')
           expect(action.id).to.equal(getPetById.id)
         })
-        .onActionFailed((error, action) => {
+        .onActionFailed((error, flow, action) => {
           expect(error.message).to.equal('Pet not found')
           expect(action.id).to.equal(getPetById.id)
         })
-        .onAfterRunning((error, result) => {
+        .onAfterRunning((error, flow, result) => {
           expect(error.message).to.equal('Pet not found')
           if (!getPetById.canRetry()) done()
         })
@@ -64,5 +70,9 @@ describe('Flow', () => {
       expect(flow.actions).to.be.empty // eslint-disable-line
       done()
     })
+  })
+
+  after(function () {
+    fs.unlinkSync('test/01_flow.db')
   })
 })

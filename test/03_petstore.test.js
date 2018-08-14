@@ -1,4 +1,6 @@
 /* global describe, it, after */
+const fs = require('fs')
+const EventEmitter = require('events')
 const expect = require('chai').expect
 const Automate = require('..')
 const {
@@ -7,9 +9,15 @@ const {
   Action
 } = Automate
 
-describe('Automate', function () {
-  const automate = new Automate({ specPath: 'examples/specs/' })
+describe('Petstore', function () {
+  const automate = new Automate({
+    paths: {
+      specs: 'examples/specs/',
+      db: 'test/03_petstore.db'
+    }
+  })
 
+  let eventEmitter = new EventEmitter()
   let CoreFuncService
   let AutomateService
   let PetstoreService
@@ -32,11 +40,9 @@ describe('Automate', function () {
 
   describe('Load and parse specs', function () {
     it('should load and parse all specs and generate services and methods', function (done) {
-      automate.initialize().then(function () {
-        done()
-      }).catch(function (err) {
-        done(err)
-      })
+      automate.initialize()
+        .then(function () { done() })
+        .catch(done)
     })
   })
 
@@ -76,7 +82,7 @@ describe('Automate', function () {
 
   describe('Prepare API methods for running the test', function () {
     it('should found needed methods for creating a test flow.', function (done) {
-      /* Automate built-in methods */
+      /* Core function methods */
       methodLog = CoreFuncService.findMethod('log')
       methodDelay = CoreFuncService.findMethod('delay')
       methodSetVariable = CoreFuncService.findMethod('setVariable')
@@ -158,7 +164,7 @@ describe('Automate', function () {
   })
 
   describe('Test normal flow operation of Automate using Petstore API', function () {
-    it('should create a test flow without error', function (done) {
+    it('should create a test flow and its subflows without error', function (done) {
       flow = automate
         .createFlow({
           name: 'Test Flow',
@@ -166,13 +172,13 @@ describe('Automate', function () {
         })
         .addTrigger(Automate.InternalEvents.Autorun)
         .addTag('Test')
-        .addTag('Automate')
+        .addTag('Petstore')
 
       expect(flow.name).to.equal('Test Flow')
       expect(flow.description).to.equal('Main flow to run all tests.')
       expect(flow.triggers).to.include(Automate.InternalEvents.Autorun)
       expect(flow.tags).to.include('Test')
-      expect(flow.tags).to.include('Automate')
+      expect(flow.tags).to.include('Petstore')
 
       subflow1 = automate
         .createFlow({
@@ -209,7 +215,7 @@ describe('Automate', function () {
       done()
     })
 
-    it('should run the flow and get the result without error', function (done) {
+    it('should create and add actions to the flows without error', function (done) {
       this.timeout(10000)
 
       const footprint = {
@@ -346,13 +352,13 @@ describe('Automate', function () {
       flow
         .addAction(log)
         .addAction(switches)
-        .onBeforeRunning(() => {
+        .onBeforeRunning((flow) => {
           footprint.flowCallbacksShouldRun[flow.name].onBeforeRunning = true
         })
-        .onActionRunning((action) => {
+        .onActionRunning((flow, action) => {
           footprint.actionsShouldRun[action.name] = true
         })
-        .onAfterRunning((error, result, args) => { // eslint-disable-line
+        .onAfterRunning((error, flow, result) => { // eslint-disable-line
           footprint.flowCallbacksShouldRun[flow.name].onAfterRunning = true
         })
 
@@ -471,14 +477,14 @@ describe('Automate', function () {
         .addAction(updatePet)
         .addAction(deletePet)
         .addAction(link)
-        .onActionRunning((action) => {
+        .onActionRunning((flow, action) => {
           footprint.actionsShouldRun[action.name] = true
         })
-        .onBeforeRunning((args) => {
+        .onBeforeRunning((flow, args) => {
           footprint.flowCallbacksShouldRun[subflow1.name].onBeforeRunning = true
         })
         .onAfterRunning((error) => {
-          if (error) done(error)
+          if (error) eventEmitter.emit('NG', error)
           else footprint.flowCallbacksShouldRun[subflow1.name].onAfterRunning = true
         })
 
@@ -525,53 +531,55 @@ describe('Automate', function () {
         .addAction(delay)
         .addAction(setVariable)
         .addAction(log2)
-        .onBeforeRunning((args) => {
+        .onBeforeRunning((flow, args) => {
           footprint.flowCallbacksShouldRun[subflow2.name].onBeforeRunning = true
         })
-        .onActionRunning((action) => {
+        .onActionRunning((flow, action) => {
           footprint.actionsShouldRun[action.name] = true
         })
-        .onAfterRunning((error, result, args) => {
-          if (error) done(error)
-          else {
-            footprint.flowCallbacksShouldRun[subflow2.name].onAfterRunning = true
+        .onAfterRunning((error, flow, result) => {
+          if (error) {
+            eventEmitter.emit('NG', error)
+            return
+          }
 
-            expect(result).to.deep.own.include({
-              message: 'OK',
-              _variables: [
-                { var1: 'Hello Var1' },
-                { var2: { hello: 'Var2' } }
-              ]
-            })
+          footprint.flowCallbacksShouldRun[subflow2.name].onAfterRunning = true
 
-            Object.keys(footprint.flowCallbacksShouldRun)
-              .map(flow => footprint.flowCallbacksShouldRun[flow])
-              .forEach((callbacks) => {
+          expect(result).to.deep.own.include({
+            message: 'OK',
+            _variables: [
+              { var1: 'Hello Var1' },
+              { var2: { hello: 'Var2' } }
+            ]
+          })
+
+          Object.keys(footprint.flowCallbacksShouldRun)
+            .map(flow => footprint.flowCallbacksShouldRun[flow])
+            .forEach((callbacks) => {
                 expect(callbacks.onBeforeRunning).to.be.true // eslint-disable-line
                 expect(callbacks.onAfterRunning).to.be.true // eslint-disable-line
-              })
+            })
 
-            Object.keys(footprint.flowCallbacksShouldNotRun)
-              .map(flow => footprint.flowCallbacksShouldNotRun[flow])
-              .forEach((callbacks) => {
+          Object.keys(footprint.flowCallbacksShouldNotRun)
+            .map(flow => footprint.flowCallbacksShouldNotRun[flow])
+            .forEach((callbacks) => {
                 expect(callbacks.onBeforeRunning).to.be.false // eslint-disable-line
                 expect(callbacks.onAfterRunning).to.be.false // eslint-disable-line
-              })
+            })
 
-            Object.keys(footprint.actionsShouldRun)
-              .map(action => footprint.actionsShouldRun[action])
-              .forEach((isActionRun) => {
+          Object.keys(footprint.actionsShouldRun)
+            .map(action => footprint.actionsShouldRun[action])
+            .forEach((isActionRun) => {
                 expect(isActionRun).to.be.true // eslint-disable-line
-              })
+            })
 
-            Object.keys(footprint.actionsShouldNotRun)
-              .map(action => footprint.actionsShouldNotRun[action])
-              .forEach((isActionRun) => {
+          Object.keys(footprint.actionsShouldNotRun)
+            .map(action => footprint.actionsShouldNotRun[action])
+            .forEach((isActionRun) => {
                 expect(isActionRun).to.be.false // eslint-disable-line
-              })
+            })
 
-            done()
-          }
+          eventEmitter.emit('OK', 'subflow2')
         })
 
       //
@@ -590,13 +598,13 @@ describe('Automate', function () {
 
       subflow3
         .addAction(log3)
-        .onBeforeRunning((args) => {
+        .onBeforeRunning((flow, args) => {
           footprint.flowCallbacksShouldNotRun[subflow3.name].onBeforeRunning = true
         })
-        .onActionRunning((action) => {
+        .onActionRunning((flow, action) => {
           footprint.actionsShouldNotRun[action.name] = true
         })
-        .onAfterRunning((error, result, args) => { // eslint-disable-line
+        .onAfterRunning((error, flow, result) => { // eslint-disable-line
           footprint.flowCallbacksShouldNotRun[subflow3.name].onAfterRunning = true
         })
 
@@ -612,22 +620,28 @@ describe('Automate', function () {
 
       subflow4
         .addAction(log4)
-        .onBeforeRunning((args) => {
+        .onBeforeRunning((flow, args) => {
           footprint.flowCallbacksShouldNotRun[subflow4.name].onBeforeRunning = true
         })
-        .onActionRunning((action) => {
+        .onActionRunning((flow, action) => {
           footprint.actionsShouldNotRun[action.name] = true
         })
-        .onAfterRunning((error, result, args) => { // eslint-disable-line
+        .onAfterRunning((error, flow, result) => { // eslint-disable-line
           footprint.flowCallbacksShouldNotRun[subflow4.name].onAfterRunning = true
         })
 
-      // Add flow to automate and bind events
-      automate.addFlow(flow)
-      automate.addFlow(subflow1)
-      automate.addFlow(subflow2)
-      automate.addFlow(subflow3)
-      automate.addFlow(subflow4)
+      done()
+    })
+
+    it('should run the flow and get the result without error', function (done) {
+      eventEmitter.on('OK', (which) => {
+        if (which === 'subflow2') done()
+        else done(`Completed by unexpected flow: ${which}`)
+      })
+
+      eventEmitter.on('NG', (error) => {
+        done(`Received unexpected error: ${error}`)
+      })
 
       // Here we go
       automate.start()
@@ -636,8 +650,6 @@ describe('Automate', function () {
     it('should clean up current test', function (done) {
       /* Restore env */
       // process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 1
-      /* Remove flow */
-      automate.removeFlow(flow)
 
       /* Clean actions */
       flow.removeAllActions()
@@ -652,11 +664,18 @@ describe('Automate', function () {
       expect(subflow3.actions).to.be.empty // eslint-disable-line
       expect(subflow4.actions).to.be.empty // eslint-disable-line
 
+      automate.destroyFlow(flow)
+      automate.destroyFlow(subflow1)
+      automate.destroyFlow(subflow2)
+      automate.destroyFlow(subflow3)
+      automate.destroyFlow(subflow4)
+
       done()
     })
   })
 
   after(function () {
     automate.stop()
+    fs.unlinkSync('test/03_petstore.db')
   })
 })

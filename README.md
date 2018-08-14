@@ -1,7 +1,7 @@
 # Automate
 An OpenAPI spec driven automation tool to orchestrate workflows across different services.
 
-[![Build Status](https://travis-ci.org/chardi/automate.svg?branch=master)](https://travis-ci.org/chardi/automate)
+[![Build Status](https://travis-ci.org/chardi/automate.svg?branch=master)](https://travis-ci.org/chiaoti/automate)
 
 ## Usage
 
@@ -185,12 +185,6 @@ flow
   })
 ```
 
-### Add flow to automate service
-
-```js
-automate.addFlow(flow)
-```
-
 *TBD*
 
 ### Start automate service
@@ -322,14 +316,7 @@ x-automate-core-functions:
 
 ### Automate Class
 
-#### Properties
-
-| Name | Description |
-|------|-------------|
-| `specPath` | Path where stores OpenAPI specs |
-| `standalone` | Run as standalone service |
-
-#### Members
+#### Class properties
 
 | Name | Description |
 |------|-------------|
@@ -338,10 +325,22 @@ x-automate-core-functions:
 | **`Action`** | Action class |
 | **`Method`** | Method class |
 | **`InternalEvents`** | Internal event constants |
+
+#### Constructor properties
+
+| Name | Description |
+|------|-------------|
+| `specPath` | Path where stores OpenAPI specs |
+| `standalone` | Run as standalone service |
+
+#### Instance properties
+
+| Name | Description |
+|------|-------------|
 | `services` | Get all services parsed from specs. *(Read-only)* |
 | `flows` | Get all flows in automate service. *(Read-only)* |
 
-#### Methods
+#### Instance methods
 
 | Name | Description |
 |------|-------------|
@@ -358,7 +357,7 @@ x-automate-core-functions:
 
 ### Service Class
 
-#### Members
+#### Instance properties
 
 | Name | Description |
 |------|-------------|
@@ -371,7 +370,7 @@ x-automate-core-functions:
 | `events` | Events supported by the service (Read-only) |
 | `methods` | Methods provides by the service (Read-only) |
 
-#### Methods
+#### Instance methods
 
 | Name | Description |
 |------|-------------|
@@ -381,7 +380,7 @@ x-automate-core-functions:
 
 ### Flow Class
 
-#### Members
+#### Instance properties
 
 | Name | Description |
 |------|-------------|
@@ -398,7 +397,7 @@ x-automate-core-functions:
 | `triggers` |
 | `actions` |
 
-#### Methods
+#### Instance methods
 
 | Name | Description |
 |------|-------------|
@@ -414,11 +413,6 @@ x-automate-core-functions:
 | `removeAllActions ()` |
 | `reset ()` |
 | `run (initArgs)` |
-
-#### Callbacks
-
-| Name | Description |
-|------|-------------|
 | `onBeforeRunning` |
 | `onAfterRunning` |
 | `onActionRunning` |
