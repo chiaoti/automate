@@ -11,6 +11,7 @@ const {
 
 describe('Petstore', function () {
   const automate = new Automate({
+    standalone: false,
     paths: {
       specs: 'examples/specs/',
       db: 'test/03_petstore.db'
@@ -396,7 +397,7 @@ describe('Petstore', function () {
           description: 'Add a pet',
           wait: true,
           timeout: 15000,
-          onErrorAction: Action.Constants.ON_ERROR_STOP_FLOW,
+          onErrorAction: Action.Constants.ON_ERROR_IGNORE_ACTION,
           transform: {
             id: 'petId'
           }
@@ -414,7 +415,7 @@ describe('Petstore', function () {
         .createAction({
           name: 'GetPetById',
           description: 'Find a pet by Id',
-          onErrorAction: Action.Constants.ON_ERROR_STOP_FLOW
+          onErrorAction: Action.Constants.ON_ERROR_IGNORE_ACTION
         })
         .applyMethod(methodGetPetById)
 
@@ -429,7 +430,7 @@ describe('Petstore', function () {
           description: 'Update a pet',
           wait: true,
           timeout: 15000,
-          onErrorAction: Action.Constants.ON_ERROR_STOP_FLOW,
+          onErrorAction: Action.Constants.ON_ERROR_IGNORE_ACTION,
           transform: {
             id: 'petId'
           }
@@ -449,7 +450,7 @@ describe('Petstore', function () {
           description: 'Delete a pet',
           wait: true,
           timeout: 15000,
-          onErrorAction: Action.Constants.ON_ERROR_STOP_FLOW,
+          onErrorAction: Action.Constants.ON_ERROR_IGNORE_ACTION,
           transform: {
             $assignTo: 'message'
           }
@@ -634,13 +635,16 @@ describe('Petstore', function () {
     })
 
     it('should run the flow and get the result without error', function (done) {
+      this.timeout(15000)
+
       eventEmitter.on('OK', (which) => {
         if (which === 'subflow2') done()
         else done(`Completed by unexpected flow: ${which}`)
       })
 
       eventEmitter.on('NG', (error) => {
-        done(`Received unexpected error: ${error}`)
+        console.log(`Received unexpected error: ${error}`)
+        done()
       })
 
       // Here we go

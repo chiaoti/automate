@@ -1,6 +1,6 @@
 {
   "name": "@chiaoti/automate",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "An OpenAPI spec driven automation tool to orchestrate workflows across different services.",
   "keywords": [
     "automate",

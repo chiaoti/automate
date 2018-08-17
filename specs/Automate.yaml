@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  version: "0.1.2"
+  version: "0.1.4"
   title: Automate Service API
   description: An automation service to orchestrate workflows.
   license:
@@ -11,6 +11,9 @@ servers:
   - url: 'http://localhost:12255/v1'
 
 tags:
+  - name: Control
+  - name: Service
+  - name: Method
   - name: Flow
   - name: Action
 
@@ -145,7 +148,81 @@ x-automate-core-functions:
         description: Event payload with any type.
 
 paths:
-  /flow:
+  /:
+    x-swagger-router-controller: automate
+    post:
+      tags:
+        - Control
+      summary: Start automate service.
+      operationId: startService
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags:
+        - Control
+      summary: Stop automate service.
+      operationId: stopService
+      responses:
+        '200':
+          description: OK
+  /services:
+    x-swagger-router-controller: automate
+    get:
+      tags:
+        - Service
+      summary: Get all supported services.
+      operationId: getServices
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Service'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /methods:
+    x-swagger-router-controller: automate
+    get:
+      tags:
+        - Method
+      summary: Get all supported methods.
+      operationId: getMethods
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Method'
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /flows:
     x-swagger-router-controller: automate
     get:
       tags:
@@ -173,6 +250,7 @@ paths:
           $ref: '#/components/responses/501NotImplemented'
         '503':
           $ref: '#/components/responses/503ServiceUnavailable'
+  /flow:
     post:
       tags:
         - Flow
@@ -189,7 +267,7 @@ paths:
         '200':
           description: A flow identifier is returned.
           content:
-            application/json:
+            text/plain:
               schema:
                 type: string
         '400':
@@ -312,7 +390,7 @@ paths:
       summary: Run a flow.
       operationId: runFlow
       requestBody:
-        description: Flow arguments.
+        description: Initial arguments.
         content:
           application/json:
             schema:
@@ -341,12 +419,84 @@ paths:
           $ref: '#/components/responses/501NotImplemented'
         '503':
           $ref: '#/components/responses/503ServiceUnavailable'
-  /action:
+  /flow/{flowId}/action/{actionId}:
+    x-swagger-router-controller: automate
+    post:
+      tags:
+        - Flow
+      summary: Add an action to given flow.
+      operationId: addActionToFlow
+      parameters:
+        - in: path
+          name: flowId
+          description: Flow identifier.
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: actionId
+          description: Action identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+    delete:
+      tags:
+        - Flow
+      summary: Remove an action from given flow.
+      operationId: removeActionFromFlow
+      parameters:
+        - in: path
+          name: flowId
+          description: Flow identifier.
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: actionId
+          description: Action identifier.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /actions:
     x-swagger-router-controller: automate
     get:
       tags:
         - Action
-      summary: Return all available actions.
+      summary: Return all actions.
       operationId: getActions
       responses:
         '200':
@@ -371,10 +521,11 @@ paths:
           $ref: '#/components/responses/501NotImplemented'
         '503':
           $ref: '#/components/responses/503ServiceUnavailable'
+  /action:
     post:
       tags:
         - Action
-      summary: Add an action to the end of sequence for given flow.
+      summary: Create an action.
       operationId: createAction
       requestBody:
         description: An action.
@@ -387,7 +538,7 @@ paths:
         '200':
           description: An action identifier is returned.
           content:
-            application/json:
+            text/plain:
               schema:
                 type: string
         '400':
@@ -508,7 +659,7 @@ paths:
 components:
   responses:
     400BadRequest:
-      description: The request was invalid or cannot be otherwise served.
+      description: The request was invalid or cannot be served.
       content:
         application/json:
           schema:
@@ -550,6 +701,30 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
   schemas:
+    Service:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        serverURL:
+          type: string
+        category:
+          type: string
+        runner:
+          type: string
+          enum:
+            - core
+            - fetch
+        events:
+          type: array
+          items:
+            type: string
+        methods:
+          type: array
+          items:
+            $ref: '#/components/schemas/Method'
     Flow:
       type: object
       properties:
@@ -593,7 +768,7 @@ components:
           description: Determine what events can trigger this flow.
           items:
             type: string
-        sequence:
+        actions:
           type: array
           description: >-
             Describe actions that will take place in sequence when the flow is
@@ -617,17 +792,33 @@ components:
         id:
           type: number
           description: Action identifier.
+        name:
+          type: string
+        description:
+          type: string
         method:
-          $ref: '#/components/schemas/Method'
+          type: string
+          description: Method name.
+        service:
+          type: string
+          description: Service name.
         args:
-          $ref: '#/components/schemas/Arguments'
+          type: object
+          description: Action arguments.
         wait:
           type: boolean
           description: >-
             Whether `Automate Flow Runner` should wait for this action to finish
             its job.
           default: true
-        onerror:
+        timeout:
+          type: number
+          default: 15000
+        retryCount:
+          type: number
+          description: Specify retry times if `onErrorAction` is set to `retry`.
+          default: 3
+        onErrorAction:
           type: string
           description: |
             Determine what to do if error occured when running action:
@@ -641,10 +832,6 @@ components:
             - restart
             - stop
           default: ignore
-        retry:
-          type: number
-          description: Specify retry times if `onerror` is set to `retry`.
-          default: 3
   
     Method:
       type: object
@@ -652,9 +839,9 @@ components:
         Methods are automatically generated by `Automate` by parsing the swagger
         API specifications.
       properties:
-        id:
+        name:
           type: string
-          description: Method identifier.
+          description: Method name.
         summary:
           type: string
           description: Short summary for the method.
@@ -671,23 +858,19 @@ components:
           description: >
             Determine which runner to run the method. Supported runners:
   
-            * `timer` - System internal runner. Mostly used for delay purpose.
-  
-            * `notifier`: System internal runner, used to report system events,
-            action errors, internal errors...etc.
+            * `core` - System internal runner.
   
             * `fetch` - Web API request runner implemented by WHATWG fetch.
   
-            * `js` - JavaScript runner, always runs inside a sandbox with limited
+            * `nodejs` - Node.js runner, always runs inside a sandbox with limited
             functionalities.
   
             * `cli` - Command line runner that allows users to run command line
             tools.
           enum:
-            - timer
-            - notifier
+            - core
             - fetch
-            - javascript
+            - nodejs
             - command
     
     MethodDef:
@@ -732,21 +915,6 @@ components:
               message: User not found.
             - code: 500
               message: Server error.
-    
-    Arguments:
-      type: object
-      description: Arguments for fetch action.
-      properties:
-        path:
-          type: object
-        query:
-          type: object
-        header:
-          type: object
-        body:
-          type: object
-        formData:
-          type: object
     
     Error:
       type: object

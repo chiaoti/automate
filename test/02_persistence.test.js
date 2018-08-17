@@ -6,6 +6,7 @@ const Automate = require('..')
 
 describe('Persistence', function () {
   const automate = new Automate({
+    standalone: false,
     paths: {
       specs: 'examples/specs/',
       db: 'test/02_persistence.db'
@@ -117,11 +118,6 @@ describe('Persistence', function () {
         .applyMethod(methodLog)
         .withArgs({ message: `Running subflow #2` })
 
-      const delay2s = automate
-        .createAction({ name: 'Delay 2s' })
-        .applyMethod(methodDelay)
-        .withArgs({ ms: 2000 })
-
       const setVariable = automate
         .createAction({ name: 'SetVariable' })
         .applyMethod(methodSetVariable)
@@ -141,11 +137,6 @@ describe('Persistence', function () {
         .createAction({ name: 'Go subflow 3' })
         .applyMethod(methodLog)
         .withArgs({ message: `Running subflow #3` })
-
-      const delay3s = automate
-        .createAction({ name: 'Delay 3s' })
-        .applyMethod(methodDelay)
-        .withArgs({ ms: 3000 })
 
       const logResult = automate
         .createAction({ name: 'Print result' })
@@ -167,13 +158,13 @@ describe('Persistence', function () {
 
       subflow2
         .addAction(logGo2)
-        .addAction(delay2s)
+        .addAction(delay1s)
         .addAction(setVariable)
         .addAction(link)
 
       subflow3
         .addAction(logGo3)
-        .addAction(delay3s)
+        .addAction(delay1s)
         .addAction(logResult)
 
       subflow4
@@ -186,6 +177,7 @@ describe('Persistence', function () {
   describe('Load from persistence', function () {
     it('should create another automate instance', function (done) {
       automate2 = new Automate({
+        standalone: false,
         paths: {
           specs: 'examples/specs/',
           db: 'test/02_persistence.db'
@@ -204,6 +196,9 @@ describe('Persistence', function () {
     })
 
     it('should load flows and actions from persistence', function (done) {
+      // automate2.flows.forEach((flow) => {
+      //   console.log(require('util').inspect(flow.toObject(), { depth: null, compact: false }))
+      // })
       expect(automate2.flows).to.be.an('array').to.have.lengthOf(5)
       expect(automate2.flows[0].actions).to.be.an('array').to.have.lengthOf(3)
       expect(automate2.flows[1].actions).to.be.an('array').to.have.lengthOf(1)
@@ -226,6 +221,7 @@ describe('Persistence', function () {
   })
 
   after(function () {
+    automate2.stop()
     fs.unlinkSync('test/02_persistence.db')
   })
 })

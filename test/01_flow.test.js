@@ -9,6 +9,7 @@ const {
 
 describe('Flow', () => {
   const automate = new Automate({
+    standalone: false,
     paths: {
       specs: 'examples/specs/',
       db: 'test/01_flow.db'
