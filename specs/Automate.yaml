@@ -11,11 +11,11 @@ servers:
   - url: 'http://localhost:12255/v1'
 
 tags:
-  - name: Control
+  - name: Control 
   - name: Service
   - name: Method
   - name: Flow
-  - name: Action
+  - name: Staging Action
 
 x-automate-services:
   - name: CoreFunction
@@ -36,27 +36,31 @@ x-automate-services:
 
 x-automate-core-functions:
   log:
-    summary: Log message
+    summary: Log a message
+    description: Writes a message to console or file.
     parameters:
       - name: message
         type: string
         required: true
   delay:
-    summary: Delay an action.
+    summary: Delay
+    description: Delay the execution of a flow.
     parameters:
       - name: ms
         description: Milliseconds
         type: number
         required: true
   link:
-    summary: Transfer execution from a flow to another.
+    summary: Run another flow
+    description: Transfer execution from a flow to another.
     parameters:
       - name: flow
         type: string
         required: true
         description: A flow id
   split:
-    summary: Split the execution of a flow into two or more subflows. All subflows will be run in parallel.
+    summary: Split flow execution
+    description: Split the execution of a flow into two or more subflows. All subflows will be run in parallel.
     parameters:
       - name: flows
         type: array
@@ -65,7 +69,8 @@ x-automate-core-functions:
           - type: string
             description: A flow id
   switch:
-    summary: Transfer execution to one of the several flows, depending on the cases.
+    summary: Selection of flow execution
+    description: Transfer execution to one of the several flows, depending on the cases.
     parameters:
       - name: target
         type: string
@@ -116,7 +121,8 @@ x-automate-core-functions:
                   value: 38.5
                   flow: '864603f85b82409e91aed8eecd76c25e'
   setVariable:
-    summary: Set one or more variables in argument at runtime to be passed through the subsequent actions in the flow.
+    summary: Set variables
+    description: Set one or more variables in argument at runtime to be passed through the subsequent actions in the flow.
     parameters:
       - name: variables
         type: array
@@ -138,7 +144,8 @@ x-automate-core-functions:
             type: string
             value: 'Chardi'
   emit:
-    summary: Emit an event to the event system, usually used to trigger another flow.
+    summary: Emit an event
+    description: Emit an event to the event system, usually used to trigger another flow.
     parameters:
       - name: event
         description: Event name.
@@ -153,7 +160,8 @@ paths:
     post:
       tags:
         - Control
-      summary: Start automate service.
+      summary: Start automate
+      description: Start automate service.
       operationId: startService
       responses:
         '200':
@@ -161,7 +169,8 @@ paths:
     delete:
       tags:
         - Control
-      summary: Stop automate service.
+      summary: Stop automate
+      description: Stop automate service.
       operationId: stopService
       responses:
         '200':
@@ -171,7 +180,8 @@ paths:
     get:
       tags:
         - Service
-      summary: Get all supported services.
+      summary: Get services
+      description: Get all supported services.
       operationId: getServices
       responses:
         '200':
@@ -199,7 +209,8 @@ paths:
     get:
       tags:
         - Method
-      summary: Get all supported methods.
+      summary: Get all methods
+      description: Get all methods from all supported services.
       operationId: getMethods
       responses:
         '200':
@@ -227,7 +238,8 @@ paths:
     get:
       tags:
         - Flow
-      summary: Get all flows.
+      summary: Get all flows
+      description: Get all flows created by user.
       operationId: getFlows
       responses:
         '200':
@@ -254,7 +266,8 @@ paths:
     post:
       tags:
         - Flow
-      summary: Create a new flow.
+      summary: Create a new flow
+      description: Create a new flow.
       operationId: createFlow
       requestBody:
         description: Flow information.
@@ -289,7 +302,8 @@ paths:
     get:
       tags:
         - Flow
-      summary: Get flow with given identifier.
+      summary: Get a flow
+      description: Get flow with given identifier.
       operationId: getFlow
       parameters:
         - in: path
@@ -322,7 +336,8 @@ paths:
     put:
       tags:
         - Flow
-      summary: Modify a flow.
+      summary: Modify a flow
+      description: Modify a flow.
       operationId: modifyFlow
       requestBody:
         description: Flow with modified data.
@@ -358,7 +373,8 @@ paths:
     delete:
       tags:
         - Flow
-      summary: Destroy a flow.
+      summary: Destroy a flow
+      description: Destroy a flow.
       operationId: destroyFlow
       parameters:
         - in: path
@@ -387,7 +403,8 @@ paths:
     post:
       tags:
         - Flow
-      summary: Run a flow.
+      summary: Run a flow
+      description: Run a flow.
       operationId: runFlow
       requestBody:
         description: Initial arguments.
@@ -424,7 +441,8 @@ paths:
     post:
       tags:
         - Flow
-      summary: Add an action to given flow.
+      summary: Add action to flow
+      description: Add an action from Staging Action to given flow.
       operationId: addActionToFlow
       parameters:
         - in: path
@@ -459,7 +477,8 @@ paths:
     delete:
       tags:
         - Flow
-      summary: Remove an action from given flow.
+      summary: Remove an action
+      description: Remove an action from given flow.
       operationId: removeActionFromFlow
       parameters:
         - in: path
@@ -491,12 +510,57 @@ paths:
           $ref: '#/components/responses/501NotImplemented'
         '503':
           $ref: '#/components/responses/503ServiceUnavailable'
-  /actions:
+  /flow/{flowId}/action/{actionId}/position/{pos}:
+    x-swagger-router-controller: automate
+    post:
+      tags:
+        - Flow
+      summary: Change action position
+      description: Change position of an action in given flow.
+      operationId: moveActionInFlow
+      parameters:
+        - in: path
+          name: flowId
+          description: Flow identifier.
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: actionId
+          description: Action identifier.
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: pos
+          description: New position.
+          required: true
+          schema:
+            type: number
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: '#/components/responses/400BadRequest'
+        '401':
+          $ref: '#/components/responses/401Unauthorized'
+        '403':
+          $ref: '#/components/responses/403Forbidden'
+        '404':
+          $ref: '#/components/responses/404NotFound'
+        '500':
+          $ref: '#/components/responses/500InternalServerError'
+        '501':
+          $ref: '#/components/responses/501NotImplemented'
+        '503':
+          $ref: '#/components/responses/503ServiceUnavailable'
+  /staging/actions:
     x-swagger-router-controller: automate
     get:
       tags:
-        - Action
-      summary: Return all actions.
+        - Staging Action
+      summary: Get all staging actions
+      description: Get all actions in Staging Action created by user.
       operationId: getActions
       responses:
         '200':
@@ -521,11 +585,12 @@ paths:
           $ref: '#/components/responses/501NotImplemented'
         '503':
           $ref: '#/components/responses/503ServiceUnavailable'
-  /action:
+  /staging/action:
     post:
       tags:
-        - Action
-      summary: Create an action.
+        - Staging Action
+      summary: Create a staging action
+      description: Create an action in Staging Action.
       operationId: createAction
       requestBody:
         description: An action.
@@ -555,12 +620,13 @@ paths:
           $ref: '#/components/responses/501NotImplemented'
         '503':
           $ref: '#/components/responses/503ServiceUnavailable'
-  '/action/{id}':
+  '/staging/action/{id}':
     x-swagger-router-controller: automate
     get:
       tags:
-        - Action
-      summary: Return an action with given action identifier.
+        - Staging Action
+      summary: Get staging action by ID
+      description: Find an action in Staging Action with given action identifier.
       operationId: getAction
       parameters:
         - in: path
@@ -590,47 +656,12 @@ paths:
           $ref: '#/components/responses/501NotImplemented'
         '503':
           $ref: '#/components/responses/503ServiceUnavailable'
-    put:
-      tags:
-        - Action
-      summary: Modify an action.
-      operationId: modifyAction
-      requestBody:
-        description: An action with modified data.
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Action'
-      parameters:
-        - in: path
-          name: id
-          description: Action identifier.
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK
-        '400':
-          $ref: '#/components/responses/400BadRequest'
-        '401':
-          $ref: '#/components/responses/401Unauthorized'
-        '403':
-          $ref: '#/components/responses/403Forbidden'
-        '404':
-          $ref: '#/components/responses/404NotFound'
-        '500':
-          $ref: '#/components/responses/500InternalServerError'
-        '501':
-          $ref: '#/components/responses/501NotImplemented'
-        '503':
-          $ref: '#/components/responses/503ServiceUnavailable'
     delete:
       tags:
-        - Action
-      summary: Destroy an action.
-      operationId: destroyAction
+        - Staging Action
+      summary: Remove a staging action
+      description: Remove an action from Staging Action.
+      operationId: removeStagingAction
       parameters:
         - in: path
           name: id
