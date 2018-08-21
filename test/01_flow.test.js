@@ -1,5 +1,4 @@
 /* global describe, it, after */
-const fs = require('fs')
 const expect = require('chai').expect
 const Automate = require('..')
 const {
@@ -10,10 +9,7 @@ const {
 describe('Flow', () => {
   const automate = new Automate({
     standalone: false,
-    paths: {
-      specs: 'examples/specs/',
-      db: 'test/01_flow.db'
-    }
+    paths: { specs: 'examples/specs/' }
   })
 
   let PetstoreService
@@ -74,6 +70,6 @@ describe('Flow', () => {
   })
 
   after(function () {
-    fs.unlinkSync('test/01_flow.db')
+
   })
 })

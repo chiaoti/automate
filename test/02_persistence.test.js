@@ -4,32 +4,150 @@ const EventEmitter = require('events')
 const expect = require('chai').expect
 const Automate = require('..')
 
-describe('Persistence', function () {
-  const automate = new Automate({
-    standalone: false,
-    paths: {
-      specs: 'examples/specs/',
-      db: 'test/02_persistence.db'
-    }
-  })
+const OUT = 'OUT'
+const IN = 'IN'
 
-  let eventEmitter = new EventEmitter()
-  let automate2
-  let CoreFuncService
-  let flow
-  let subflow1
-  let subflow2
-  let subflow3
-  let subflow4
-  let methodLog
-  let methodDelay
-  let methodSetVariable
-  let methodLink
-  let methodSwitch
+describe('Persistence', function () {
+  const eventEmitter = new EventEmitter()
+  const automate = {
+    OUT: new Automate({
+      standalone: false,
+      paths: {
+        specs: 'examples/specs/',
+        db: 'test/02_persistence.db'
+      }
+    }),
+    IN: null
+  }
+
+  const fixtures = {
+    services: [
+      'CoreFunction'
+    ],
+    flows: [{
+      id: 'FLOW_ID_MAIN',
+      name: 'Persistence Test',
+      triggers: [Automate.InternalEvents.Autorun],
+      tags: ['Test', 'Persistence']
+    }, {
+      id: 'FLOW_ID_SUBFLOW_1',
+      name: 'Subflow #1',
+      triggers: [],
+      tags: ['Test', 'Persistence']
+    }, {
+      id: 'FLOW_ID_SUBFLOW_2',
+      name: 'Subflow #2',
+      triggers: [],
+      tags: ['Test', 'Persistence']
+    }, {
+      id: 'FLOW_ID_SUBFLOW_3',
+      name: 'Subflow #3',
+      triggers: [],
+      tags: ['Test', 'Persistence']
+    }, {
+      id: 'FLOW_ID_SUBFLOW_4',
+      name: 'Subflow #4',
+      triggers: [],
+      tags: ['Test', 'Persistence']
+    }],
+    methods: [
+      'log',
+      'delay',
+      'setVariable',
+      'link',
+      'switch'
+    ],
+    actions: {
+      FLOW_ID_MAIN: [{
+        name: 'Log',
+        method: 'log',
+        args: { message: `Let's go` }
+      }, {
+        name: 'Delay1',
+        method: 'delay',
+        args: { ms: 1000 }
+      }, {
+        name: 'Selector',
+        method: 'switch',
+        args: {
+          target: 'Argument',
+          property: 'message',
+          cases: [
+            {
+              rule: 'contains',
+              value: 'hello',
+              flow: 'FLOW_ID_SUBFLOW_1'
+            },
+            {
+              rule: 'contains',
+              value: 'go',
+              flow: 'FLOW_ID_SUBFLOW_2'
+            }
+          ]
+        }
+      }],
+
+      FLOW_ID_SUBFLOW_1: [{
+        name: 'Start Subflow 1',
+        method: 'log',
+        args: { message: `Oops, Subflow #1 shouldn't be run!` }
+      }],
+
+      FLOW_ID_SUBFLOW_2: [{
+        name: 'Start Subflow 2',
+        method: 'log',
+        args: { message: 'Running subflow #2...' }
+      }, {
+        name: 'Set Variables',
+        method: 'setVariable',
+        args: {
+          variables: [
+            { from: 'Subflow #2' },
+            { to: 'Subflow #3' }
+          ]
+        }
+      }, {
+        name: 'Delay2',
+        method: 'delay',
+        args: { ms: 1000 }
+      }, {
+        name: 'Link to Subflow #3',
+        method: 'link',
+        args: { flow: 'FLOW_ID_SUBFLOW_3' }
+      }],
+
+      FLOW_ID_SUBFLOW_3: [{
+        name: 'Start Subflow 3',
+        method: 'log',
+        args: { message: 'Running subflow #3...' }
+      }, {
+        name: 'Delay3',
+        method: 'delay',
+        args: { ms: 1000 }
+      }, {
+        name: 'Log Test Result',
+        method: 'log',
+        args: { message: 'Done' }
+      }],
+
+      FLOW_ID_SUBFLOW_4: [{
+        name: 'Start Subflow 4',
+        method: 'log',
+        args: { message: 'Running subflow #4...' }
+      }]
+    }
+  }
+
+  const outputs = {
+    services: {},
+    flows: {},
+    methods: {},
+    actions: {}
+  }
 
   describe('Load and parse specs', function () {
     it('should load and parse all specs and generate services and methods', function (done) {
-      automate.initialize()
+      automate[OUT].initialize()
         .then(function () { done() })
         .catch(done)
     })
@@ -37,138 +155,40 @@ describe('Persistence', function () {
 
   describe('Create test flow', function () {
     it('should loaded services successfully', function (done) {
-      CoreFuncService = automate.findServiceByName('CoreFunction')
+      fixtures.services.forEach((service) => {
+        outputs.services[service] = automate[OUT].findServiceByName(service)
+      })
       done()
     })
 
     it('should found needed methods for creating a test flow.', function (done) {
       /* Core function methods */
-      methodLog = CoreFuncService.findMethod('log')
-      methodDelay = CoreFuncService.findMethod('delay')
-      methodSetVariable = CoreFuncService.findMethod('setVariable')
-      methodLink = CoreFuncService.findMethod('link')
-      methodSwitch = CoreFuncService.findMethod('switch')
+      fixtures.methods.forEach((method) => {
+        outputs.methods[method] = outputs.services['CoreFunction'].findMethod(method)
+      })
       done()
     })
 
-    it('should create a test flow and its subflows without error', function (done) {
-      flow = automate
-        .createFlow({ name: 'Persistence Test' })
-        .addTrigger(Automate.InternalEvents.Autorun)
-        .addTag('Test')
-        .addTag('Persistence')
+    it('should create a main test flow and its subflows without error', function (done) {
+      fixtures.flows.forEach((flowProps) => {
+        outputs.flows[flowProps.id] = automate[OUT].createFlow({
+          id: flowProps.id,
+          name: flowProps.name
+        })
+        flowProps.triggers.forEach(event => outputs.flows[flowProps.id].addTrigger(event))
+        flowProps.tags.forEach(tag => outputs.flows[flowProps.id].addTag(tag))
 
-      subflow1 = automate
-        .createFlow({ name: 'Subflow #1' })
-        .addTag('Test')
-        .addTag('Persistence')
-
-      subflow2 = automate
-        .createFlow({ name: 'Subflow #2' })
-        .addTag('Test')
-        .addTag('Persistence')
-
-      subflow3 = automate
-        .createFlow({ name: 'Subflow #3' })
-        .addTag('Test')
-        .addTag('Persistence')
-
-      subflow4 = automate
-        .createFlow({ name: 'Subflow #4' })
-        .addTag('Test')
-        .addTag('Persistence')
-
-      const logGo = automate
-        .createAction({ name: 'Log' })
-        .applyMethod(methodLog)
-        .withArgs({ message: `Let's go` })
-
-      const delay1s = automate
-        .createAction({ name: 'Delay 1s' })
-        .applyMethod(methodDelay)
-        .withArgs({ ms: 1000 })
-
-      const switchGo = automate
-        .createAction({ name: 'Switch' })
-        .applyMethod(methodSwitch)
-        .withArgs({
-          target: 'Argument',
-          property: 'message',
-          cases: [
-            {
-              rule: 'contains',
-              value: 'Hello',
-              flow: subflow1.id
-            },
-            {
-              rule: 'contains',
-              value: 'Go',
-              flow: subflow2.id
-            }
-          ]
+        outputs.actions[flowProps.id] = fixtures.actions[flowProps.id].map((actionProps) => {
+          return automate[OUT].createAction({ name: actionProps.name })
+            .applyMethod(outputs.methods[actionProps.method])
+            .withArgs(actionProps.args)
         })
 
-      const logGo1 = automate
-        .createAction({ name: 'Go subflow 1' })
-        .applyMethod(methodLog)
-        .withArgs({ message: `Running subflow #1` })
-
-      const logGo2 = automate
-        .createAction({ name: 'Go subflow 2' })
-        .applyMethod(methodLog)
-        .withArgs({ message: `Running subflow #2` })
-
-      const setVariable = automate
-        .createAction({ name: 'SetVariable' })
-        .applyMethod(methodSetVariable)
-        .withArgs({
-          variables: [
-            { from: 'Subflow 2' },
-            { to: 'Subflow 3' }
-          ]
+        // Add actions in reverse order so we can test action movement function later
+        outputs.actions[flowProps.id].slice().reverse().forEach((action) => {
+          outputs.flows[flowProps.id].addAction(action)
         })
-
-      const link = automate
-        .createAction({ name: 'Link to subflow 3' })
-        .applyMethod(methodLink)
-        .withArgs({ flow: subflow3.id })
-
-      const logGo3 = automate
-        .createAction({ name: 'Go subflow 3' })
-        .applyMethod(methodLog)
-        .withArgs({ message: `Running subflow #3` })
-
-      const logResult = automate
-        .createAction({ name: 'Print result' })
-        .applyMethod(methodLog)
-        .withArgs({ message: 'Done' })
-
-      const logGo4 = automate
-        .createAction({ name: 'Go subflow 4' })
-        .applyMethod(methodLog)
-        .withArgs({ message: `Running subflow #4` })
-
-      flow
-        .addAction(logGo)
-        .addAction(delay1s)
-        .addAction(switchGo)
-
-      subflow1
-        .addAction(logGo1)
-
-      subflow2
-        .addAction(logGo2)
-        .addAction(delay1s)
-        .addAction(setVariable)
-        .addAction(link)
-
-      subflow3
-        .addAction(logGo3)
-        .addAction(delay1s)
-        .addAction(logResult)
-
-      subflow4
-        .addAction(logGo4)
+      })
 
       done()
     })
@@ -176,7 +196,7 @@ describe('Persistence', function () {
 
   describe('Load from persistence', function () {
     it('should create another automate instance', function (done) {
-      automate2 = new Automate({
+      automate[IN] = new Automate({
         standalone: false,
         paths: {
           specs: 'examples/specs/',
@@ -184,11 +204,11 @@ describe('Persistence', function () {
         }
       })
 
-      automate2.initialize()
+      automate[IN].initialize()
         .then(function () {
-          automate2.flows[3]
+          automate[IN].flows[3]
             .onAfterRunning((error, flow, result) => { // eslint-disable-line
-              eventEmitter.emit('OK')
+              eventEmitter.emit('TEST OK')
             })
           done()
         })
@@ -196,38 +216,40 @@ describe('Persistence', function () {
     })
 
     it('should load flows and actions from persistence', function (done) {
-      // automate2.flows.forEach((flow) => {
+      // automate[IN].flows.forEach((flow) => {
       //   console.log(require('util').inspect(flow.toObject(), { depth: null, compact: false }))
       // })
-      expect(automate2.flows).to.be.an('array').to.have.lengthOf(5)
-      expect(automate2.flows[0].actions).to.be.an('array').to.have.lengthOf(3)
-      expect(automate2.flows[1].actions).to.be.an('array').to.have.lengthOf(1)
-      expect(automate2.flows[2].actions).to.be.an('array').to.have.lengthOf(4)
-      expect(automate2.flows[3].actions).to.be.an('array').to.have.lengthOf(3)
-      expect(automate2.flows[4].actions).to.be.an('array').to.have.lengthOf(1)
+      expect(automate[IN].flows).to.be.an('array').to.have.lengthOf(fixtures.flows.length)
+      automate[IN].flows.forEach((flow) => {
+        expect(flow.actions).to.be.an('array').to.have.lengthOf(fixtures.actions[flow.id].length)
+        flow.actions.forEach(action => expect(action.toObject()).to.be.not.empty)
+      })
+      done()
+    })
 
-      automate2.flows[0].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
-      automate2.flows[1].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
-      automate2.flows[2].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
-      automate2.flows[3].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
-      automate2.flows[4].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
+    it('should move all actions in right order', function (done) {
+      automate[IN].flows.forEach((flow) => {
+        flow.actions.slice().reverse().forEach((action, idx) => {
+          flow.moveAction(action, idx)
+        })
+      })
       done()
     })
 
     it('should run the flow and get the result without error', function (done) {
       this.timeout(15000)
 
-      eventEmitter.on('OK', () => {
+      eventEmitter.on('TEST OK', () => {
         done()
       })
 
       // Here we go
-      automate2.start()
+      automate[IN].start()
     })
   })
 
   after(function () {
-    automate2.stop()
+    automate[IN].stop()
     fs.unlinkSync('test/02_persistence.db')
   })
 })
