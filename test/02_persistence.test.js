@@ -205,6 +205,12 @@ describe('Persistence', function () {
       expect(automate2.flows[2].actions).to.be.an('array').to.have.lengthOf(4)
       expect(automate2.flows[3].actions).to.be.an('array').to.have.lengthOf(3)
       expect(automate2.flows[4].actions).to.be.an('array').to.have.lengthOf(1)
+
+      automate2.flows[0].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
+      automate2.flows[1].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
+      automate2.flows[2].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
+      automate2.flows[3].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
+      automate2.flows[4].actions.forEach(action => expect(action.toObject()).to.be.not.empty)
       done()
     })
 

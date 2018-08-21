@@ -1,7 +1,7 @@
 # Automate
 An OpenAPI spec driven automation tool to orchestrate workflows across different services.
 
-[![Build Status](https://travis-ci.org/chardi/automate.svg?branch=master)](https://travis-ci.org/chiaoti/automate)
+[![Build Status](https://travis-ci.org/chiaoti/automate.svg?branch=master)](https://travis-ci.org/chiaoti/automate)
 
 ## Usage
 
