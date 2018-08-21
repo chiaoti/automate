@@ -1,7 +1,11 @@
 const Automate = require('..')
 
 // Create an automate instance.
-const automate = new Automate({ specPath: 'examples/specs/' })
+const automate = new Automate({
+  paths: {
+    specs: 'examples/specs/'
+  }
+})
 
 // Initialization process:
 //  - Load and parse OpenAPI specs for generating services and methods
@@ -118,9 +122,6 @@ automate
         // The flow completed with result or error
         automate.stop()
       })
-
-    // Add flow to automate service
-    automate.addFlow(flow)
 
     // Start automate service
     automate.start()

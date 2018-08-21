@@ -1,7 +1,11 @@
 const Automate = require('..')
 
 // Create an automate instance.
-const automate = new Automate({ specPath: 'examples/specs/' })
+const automate = new Automate({
+  paths: {
+    specs: 'examples/specs/'
+  }
+})
 
 // Initialization process:
 //  - Load and parse OpenAPI specs for generating services and methods
@@ -128,10 +132,6 @@ automate
       .onAfterRunning((error, result, args) => { // eslint-disable-line
         automate.stop()
       })
-
-    // Add flow to automate service
-    automate.addFlow(flow1)
-    automate.addFlow(flow2)
 
     // Start automate service
     automate.start()
